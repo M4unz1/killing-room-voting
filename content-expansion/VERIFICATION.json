@@ -1,0 +1,48 @@
+{
+  "content_version": "0.1.0-alpha",
+  "unity_version": "5.3.4f1",
+  "plugin_sha256": "44e2bf147235d95f75e3003470a72cc47ed39b6515856d61de09d38be4eb581a",
+  "tested_game_sha256": "ec0a8f32952d2549ee873667f3db70914332ff1f43cf64751146fe793bcd8483",
+  "build": {
+    "result": "passed",
+    "sdk": "8.0.427",
+    "language": "C# 3",
+    "framework": ".NET Framework 3.5",
+    "clr": "v2.0.50727",
+    "assembly_references": {
+      "mscorlib": "2.0.0.0",
+      "System.Core": "3.5.0.0",
+      "Assembly-CSharp": "0.0.0.0",
+      "0Harmony": "2.9.0.0",
+      "UnityEngine": "0.0.0.0",
+      "BepInEx": "5.4.23.6"
+    }
+  },
+  "checks": {
+    "pure_csharp_lifecycle_assertions": 32,
+    "python_installer_tests": 9,
+    "voting_server_regression_tests": 36,
+    "static_game_members_verified": 16,
+    "package_game_dll_count": 0
+  },
+  "installer_with_official_archives": {
+    "status": "passed",
+    "architectures": [
+      "x86",
+      "x64"
+    ],
+    "game_exe_executed": false,
+    "checks": [
+      "official archive hashes",
+      "correct architecture files",
+      "actual compiled plugin",
+      "original game DLL unchanged",
+      "repeat installation without network"
+    ]
+  },
+  "windows_in_game_launch": {
+    "status": "not_run",
+    "reason": "Windows game process unavailable in build environment."
+  },
+  "scope": "Enemy variants reuse existing models. No game assemblies or game assets are included."
+}

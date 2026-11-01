@@ -1,0 +1,2 @@
+# Optional static ABI audit; not required to install or play.
+dnfile>=0.17,<0.19

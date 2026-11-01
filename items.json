@@ -1,1 +1,26 @@
-{}
+{
+  "KRCE_AdrenalineBattery": {
+    "name": "Adrenaline Battery",
+    "description": "Clearing a combat room grants +15% movement speed for 8 seconds."
+  },
+  "KRCE_EchoMagazine": {
+    "name": "Echo Magazine",
+    "description": "Every sixth standard gun volley fires a free extra volley. Special weapons and melee are excluded."
+  },
+  "KRCE_EmergencyRelay": {
+    "name": "Emergency Relay",
+    "description": "After surviving a hit at 25% health or less, take 50% less damage for 4 seconds. Cooldown: 45 seconds."
+  },
+  "KRCE_OverheatedRelay": {
+    "name": "Overheated Relay",
+    "description": "+12% direct damage, but take 15% more damage. A cursed crowd favourite."
+  },
+  "KRCE_LeadBoots": {
+    "name": "Lead Boots",
+    "description": "Lose 8% of the speed-stat range and gain 4 defense points."
+  },
+  "KRCE_StaticCoil": {
+    "name": "Static Coil",
+    "description": "Each cleared combat room drains 5% of maximum armour. Health is not drained."
+  }
+}

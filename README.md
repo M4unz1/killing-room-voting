@@ -9,6 +9,10 @@ ersetzt den abgeschalteten Voting-Dienst durch einen eigenen Server.
 Mehrere Spieler können denselben Server gleichzeitig nutzen. Jeder hat eigene
 Abstimmungen und Zuschauerlinks. Das Spiel selbst bleibt ein Einzelspielerspiel.
 
+**Optionale Inhaltserweiterung:** Die [Community Content Alpha](content-expansion/README.md)
+ergänzt vier Challenges, sechs Items und drei Gegnervarianten. Sie wird getrennt
+installiert und braucht noch einen Test im Windows-Spiel.
+
 **Neu: API-Schlüssel entstehen automatisch.** Du gibst nur die Serveradresse ein.
 Beim ersten Verbinden erzeugt dein PC seinen Schlüssel und registriert ihn am
 Server. Du musst keinen Schlüssel anfordern oder von Hand eingeben.

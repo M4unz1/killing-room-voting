@@ -1,5 +1,9 @@
 # Killing Room Community Voting
 
+**Optional content pack:** [Community Content Alpha](content-expansion/README.en.md)
+adds four challenges, six items and three enemy variants. It installs separately
+and still needs a Windows in-game test.
+
 **Version 0.2.1 · [Deutsch](README.md) · English**
 
 Let viewers vote in Killing Room again. They use a link or Discord to choose

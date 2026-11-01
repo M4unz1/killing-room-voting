@@ -1,0 +1,6 @@
+build/
+tests/bin/
+tests/obj/
+*.dll
+*.pdb
+*.zip
