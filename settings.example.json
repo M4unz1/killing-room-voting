@@ -8,6 +8,7 @@
   },
   "client": {
     "server_url": "",
+    "player_name": "",
     "game_dll": "",
     "game_executable": ""
   },
@@ -18,6 +19,11 @@
   },
   "stats": {
     "public": true
+  },
+  "registration": {
+    "enabled": true,
+    "per_hour": 60,
+    "max_clients": 10000
   },
   "connection_timeout_seconds": 120
 }

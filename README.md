@@ -1,217 +1,259 @@
-# Killing Room Community Voting 0.2
+# Killing Room Community Voting
 
-**Sprache:** Deutsch · [English](README.en.md)
+**Version 0.2.1 · Deutsch · [English](README.en.md)**
 
-Die funktionierende lokale Wiederherstellung wird um einen gemeinsamen Server,
-Discord-Abstimmungen, Statistiken, einstellbare Mindeststimmen und Sitzungs-Timeouts
-erweitert. Der zentrale Server ist für mehrere gleichzeitig spielende Personen
-vorbereitet. Er wird separat auf einem Linux-Server mit Docker betrieben.
+Zuschauer können wieder in Killing Room abstimmen: Sie wählen über einen Link
+oder in Discord, welche Belohnung oder Bestrafung im Spiel ankommt. Dieser Mod
+ersetzt den abgeschalteten Voting-Dienst durch einen eigenen Server.
 
-## Aufbau
+Mehrere Spieler können denselben Server gleichzeitig nutzen. Jeder hat eigene
+Abstimmungen und Zuschauerlinks. Das Spiel selbst bleibt ein Einzelspielerspiel.
 
-- **Spiel-PC:** Killing Room mit dem vorhandenen DLL-Patch und `bridge.py` auf
-  `127.0.0.1:8765`. Jeder Spieler verwendet seinen eigenen API-Schlüssel.
-- **Zentraler Server:** Sitzungen, Stimmen, gemeinsame Boss-Statistik und optional
-  ein Discord-Bot. Spielzugriffe sind mit Spielerschlüsseln geschützt.
-- **Zuschauer:** öffentlicher HTTPS-Link je Spielrunde oder Discord-Knöpfe.
-- **Trennung:** Ein Schlüssel kann keine fremde Spielrunde steuern oder deren
-  Lebenszeichen senden. Stimmen sind je Spielrunde getrennt.
+**Neu: API-Schlüssel entstehen automatisch.** Du gibst nur die Serveradresse ein.
+Beim ersten Verbinden erzeugt dein PC seinen Schlüssel und registriert ihn am
+Server. Du musst keinen Schlüssel anfordern oder von Hand eingeben.
 
-Der Zuschauerlink enthält keinen Spielerschlüssel. Der API-Schlüssel wird nur
-zwischen dem eigenen Spiel-PC und dem zentralen Server verwendet.
+- **Du möchtest spielen?** Starte mit [Spiel-PC einrichten](#spiel-pc-einrichten).
+- **Du möchtest einen Server betreiben?** Nutze [Eigenen Server einrichten](#eigenen-server-einrichten).
+- **Du möchtest nur abstimmen?** Öffne den Zuschauerlink des Spielers. Du brauchst keinen Mod.
 
-## Einstellungen
+## Spiel-PC einrichten
 
-Im GitHub-Checkout liegen die Vorlagen `settings.example.json` und
-`clients.example.json`. Auf dem Spiel-PC erstellt `EINSTELLUNGEN_BEARBEITEN.bat`
-die persönliche `settings.json` beim ersten Öffnen. Auf dem Server legt
-`setup_server.py` die erforderlichen Konfigurationsdateien an. Diese persönlichen
-Dateien und `settings.env` sind durch `.gitignore` vom Versionsverlauf ausgeschlossen.
+Du brauchst **Windows**, **Killing Room**, **Python 3.10 oder neuer** und die
+HTTPS-Adresse eines laufenden Voting-Servers, zum Beispiel `https://vote.example.de`.
+Ersetze Beispieladressen in dieser Anleitung durch deine echte Adresse.
 
-Die bearbeitbare Datei heißt `settings.json`. Beispiel für die wichtigen Werte:
+### 1. Projekt herunterladen
 
-```json
-{
-  "minimum_votes": 3,
-  "connection_timeout_seconds": 120
-}
+Auf GitHub **Code → Download ZIP** wählen und den gesamten Inhalt entpacken.
+Alle Dateien müssen zusammen im Projektordner bleiben.
+
+### 2. Serveradresse eintragen
+
+`EINSTELLUNGEN_BEARBEITEN.bat` doppelklicken. Dadurch öffnet sich `settings.json`.
+Die Datei wird bei Bedarf automatisch aus der Vorlage erstellt.
+
+Im Abschnitt `client` diese Werte ändern und die Datei speichern:
+
+| Eintrag | Was du einträgst |
+| --- | --- |
+| `server_url` | Die HTTPS-Adresse deines Voting-Servers, ohne zusätzlichen Pfad. |
+| `player_name` | Optional dein Name. Du kannst das Feld auch leer lassen. |
+
+`game_dll` und `game_executable` zunächst leer lassen. Die übrigen Abschnitte behalten.
+Der Name auf der Abstimmungsseite wird später vom Spiel übernommen.
+
+### 3. Patch installieren
+
+Killing Room schließen und `EINSTELLUNGEN_ANWENDEN.bat` doppelklicken.
+
+- Dein API-Schlüssel wird automatisch erzeugt, gespeichert und registriert.
+- Wähle die `Assembly-CSharp.dll` aus dem Spielordner unter `<Game>_Data/Managed/`.
+- Das Programm sichert die Originaldatei und installiert den passenden Patch.
+
+Der Pfad zur Spiel-EXE wird normalerweise automatisch erkannt. Falls
+`game_executable` leer bleibt, dort den vollständigen Pfad zur Killing-Room-EXE eintragen.
+Unbekannte oder bereits anders veränderte DLL-Versionen werden abgelehnt.
+
+### 4. Verbinden und spielen
+
+1. `3_SPIEL_PC_VERBINDEN.bat` doppelklicken und das Fenster geöffnet lassen.
+2. Killing Room starten und im Spiel die Zuschauer-URL erzeugen.
+3. Den angezeigten HTTPS-Link an deine Zuschauer weitergeben.
+4. Eine Spielrunde starten. Die vier Abstimmungsoptionen erscheinen automatisch.
+
+Zuschauer benötigen nur diesen Link. Die Stimmen werden beim Levelende vom Spiel abgeholt.
+
+> Pro Spiel-PC entweder `3_SPIEL_PC_VERBINDEN.bat` **oder** `2_SERVER_STARTEN.bat`
+> ausführen. Für einen gemeinsamen öffentlichen Server ist **3** vorgesehen.
+> **2** startet den separaten lokalen Testbetrieb.
+
+## Einstellungen ändern
+
+Die Einstellungen für den gemeinsamen Server ändert der Betreiber in seiner
+`settings.json`. Anschließend muss er den Server neu starten.
+
+| Einstellung | Bedeutung | Standard |
+| --- | --- | --- |
+| `minimum_votes` | Benötigte Stimmen für die Item-Vergabe. Erlaubt: 1–127. | `1` |
+| `connection_timeout_seconds` | Sitzung nach so vielen Sekunden ohne Lebenszeichen schließen. Erlaubt: 5–86400; `0` schaltet es ab. | `120` |
+| `stats.public` | Öffentliche Statistikseite anzeigen. | `true` |
+
+Nach einer Änderung der benötigten Stimmen: **Spiel schließen und auf dem
+Spiel-PC erneut `EINSTELLUNGEN_ANWENDEN.bat` ausführen.** Bereits gestartete
+Spielrunden behalten ihre bisherige Stimmenvorgabe.
+
+### Was passiert, wenn jemand aufhört?
+
+Solange das Spiel läuft, sendet der PC regelmäßig ein Lebenszeichen. Wird das
+Spiel oder das Verbindungsfenster beendet, endet die Sitzung nach dem Timeout.
+Dann schließen die Abstimmungen und die Zuschauerseite hört auf, neue Daten
+abzufragen. Andere Spieler können weiter spielen; Statistiken bleiben erhalten.
+Eine Pause im laufenden Spiel zählt nicht allein als Verbindungsabbruch.
+
+## Eigenen Server einrichten
+
+Dieser Abschnitt ist für den **Betreiber**. Die anderen Spieler brauchen diese
+Schritte nicht auszuführen.
+
+Du brauchst einen Linux-Server mit **Python 3**, **Docker Compose** und einer
+Domain oder Subdomain. Deren DNS-Eintrag muss auf den Server zeigen. Die Ports
+**80 und 443** müssen erreichbar sein, damit Caddy HTTPS bereitstellen kann.
+
+### 1. Dateien und Domain vorbereiten
+
+Projekt auf den Server kopieren und im Projektordner ausführen:
+
+```bash
+python3 setup_server.py vote.example.de
 ```
 
-Diese beiden Werte in der vorhandenen vollständigen Datei ändern; die übrigen
-Blöcke beibehalten. Mindeststimmen: **1 bis 127**. Timeout: **5 bis 86400 Sekunden**,
-oder **0** zum Deaktivieren. Änderungen am Server werden nach dessen Neustart
-übernommen. Die Mindeststimmen einer gestarteten Spielrunde bleiben konstant.
+Die Beispieladresse ersetzen. Das erstellt die Konfigurationsdateien und den
+Ordner `seed/`. Eine vorhandene `settings.env` wird nicht überschrieben.
 
-`clients.json` kann pro Spieler eine abweichende `minimum_votes` festlegen.
-Der Spiel-PC liest seinen Wert anhand seines API-Schlüssels vom Server und
-passt die DLL vor dem nächsten Spielstart an. Dafür das Spiel beenden und
-`EINSTELLUNGEN_ANWENDEN.bat` ausführen. Es gibt weiterhin eine geprüfte Sicherung
-`Assembly-CSharp.dll.kr-original.bak` für die Rücksicherung.
+### 2. Server starten
 
-`EINSTELLUNGEN_BEARBEITEN.bat` öffnet die JSON-Datei im Editor.
+```bash
+docker compose --env-file settings.env up -d --build
+```
 
-## Zentralen Server vorbereiten
+Die Spieler erhalten jetzt **nur die Serveradresse**. Ihre Schlüssel werden
+automatisch beim ersten Verbinden registriert. Du musst keine Schlüssel verteilen.
 
-Benötigt werden ein eigener Linux-Server mit Docker Compose und eine Domain
-oder Subdomain. Deren DNS-Eintrag muss auf den Server zeigen; Caddy benötigt
-die öffentlichen Ports 80 und 443 für HTTPS. Das Paket erstellt oder bucht
-keinen Server und verändert keine DNS-Einträge.
+- Startseite: `https://DEINE-DOMAIN`
+- Gemeinsame Statistik: `https://DEINE-DOMAIN/stats`
+- Zuschauerlink: Wird für jede Spielrunde vom Spiel erzeugt.
 
-1. Dieses Paket in einen neuen Ordner auf dem Server entpacken.
-2. Im Paketordner ausführen:
+### 3. Server verwalten
 
-   ```bash
-   python3 setup_server.py vote.example.de
-   ```
-
-   `vote.example.de` durch die eigene Subdomain ersetzen. Es entstehen
-   `settings.env` mit einem zufälligen Standardschlüssel und das Verzeichnis `seed`.
-3. Für jeden Spieler einen eigenen Schlüssel erzeugen, auch für dich selbst:
-
-   ```bash
-   python3 clients.py "Lars" --minimum-votes 3
-   python3 clients.py "Spieler 2" --minimum-votes 5
-   ```
-
-   Die zugehörigen Schlüsseldateien liegen unter `client_keys/`. Jede Person
-   erhält nur ihre eigene Datei und speichert sie auf dem Spiel-PC als
-   `settings.env`. Die Liste `clients.json` enthält nur die Schlüssel-Prüfsummen.
-4. Optional vor dem ersten Start: Den bisherigen lokalen Voting-Server stoppen
-   und seine `kr_voting.sqlite3` nach `seed/kr_voting.sqlite3` auf dem Server
-   kopieren. Beim ersten Start mit leerem Datenvolume wird sie übernommen.
-   Ein vorhandenes Server-Datenvolume wird dadurch nicht überschrieben.
-5. Starten:
-
-   ```bash
-   docker compose --env-file settings.env up -d --build
-   ```
-
-   Caddy leitet HTTPS zum internen Server weiter. Die Datenbank liegt dauerhaft
-   im Docker-Volume `kr_data`. Die Statistik ist unter `https://vote.example.de/stats`
-   erreichbar. Die eigentlichen Zuschauerlinks entstehen beim Spielstart.
-
-Diagnose und Neustart:
+Logs anzeigen:
 
 ```bash
 docker compose --env-file settings.env logs --tail 100 app
+```
+
+Nach Änderungen an `settings.json` oder `clients.json` neu starten:
+
+```bash
 docker compose --env-file settings.env restart app
 ```
 
-Nach Änderungen an `settings.json` oder `clients.json` den App-Container neu
-starten. Damit werden auch neue Discord-Server registriert. Beim Aktualisieren
-eigene `settings.json`, `settings.env`, `clients.json`, `client_keys/`, `items.json`
-und Datenvolumes aufbewahren.
+**Beim Aktualisieren behalten:** `settings.json`, `settings.env`, `clients.json`,
+`client_keys/`, eigene `items.json` und die Docker-Datenvolumes. Die Datenbank liegt
+im Volume `kr_data`.
 
-## Jeden Spiel-PC verbinden
+Optional beim ersten Umzug: Den bisherigen lokalen Server stoppen und seine
+`kr_voting.sqlite3` nach `seed/kr_voting.sqlite3` kopieren. Sie wird nur übernommen,
+wenn das Datenvolume noch leer ist.
 
-1. Paket vollständig auf den Windows-PC entpacken. Python 3.10 oder neuer ist
-   erforderlich. Der PC-Client benötigt keine zusätzlichen Python-Pakete.
-2. Die eigene Schlüsseldatei vom Server als `settings.env` im Paketordner speichern.
-3. `EINSTELLUNGEN_BEARBEITEN.bat` öffnen und in `settings.json` unter
-   `client.server_url` die HTTPS-Basisadresse eintragen:
+## Automatische Schlüssel und einzelne Spieler
 
-   ```json
-   "client": {
-     "server_url": "https://vote.example.de",
-     "game_dll": "",
-     "game_executable": ""
-   }
-   ```
+Der Spiel-PC speichert seinen Schlüssel pro Server unter `client_keys/`. Diese
+Dateien privat aufbewahren und beim Update behalten. Der Server speichert nur
+Prüfsummen. Neustarts und Timeouts verwenden denselben Schlüssel weiter.
+Geht die lokale Schlüsseldatei verloren, entsteht eine neue Spieler-Identität.
 
-4. Killing Room beenden. `EINSTELLUNGEN_ANWENDEN.bat` starten und die DLL aus dem
-   installierten Spiel wählen. Der Installer speichert ihren Pfad und erkennt
-   normalerweise auch die zugehörige Spiel-EXE. Falls `game_executable` leer bleibt,
-   dort den vollständigen Pfad zur Killing-Room-EXE eintragen.
-5. `3_SPIEL_PC_VERBINDEN.bat` starten. Dabei wird die Mindeststimmenzahl mit dem
-   zentralen Server abgeglichen. Das Fenster geöffnet lassen.
-6. Killing Room starten, Zuschauer-URL erzeugen und den HTTPS-Link teilen.
+In der Serverdatei `settings.json` steuert der Abschnitt `registration` die Aufnahme:
 
-Auf dem Spiel-PC läuft entweder die lokale Variante `2_SERVER_STARTEN.bat` oder
-der Client `3_SPIEL_PC_VERBINDEN.bat`: Beide verwenden den vom DLL-Patch erwarteten
-Port 8765. Für den dauerhaften gemeinsamen Server ist der dritte Starter vorgesehen.
+| Eintrag | Bedeutung | Standard |
+| --- | --- | --- |
+| `enabled` | Neue Spiel-PCs automatisch aufnehmen. | `true` |
+| `per_hour` | Höchstens so viele neue Registrierungen in einer rollierenden Stunde, für den gesamten Server. | `60` |
+| `max_clients` | Höchstzahl automatisch registrierter Identitäten insgesamt. | `10000` |
 
-## Timeout und Ressourcen
+Bestehende Schlüssel funktionieren auch bei geschlossener Aufnahme oder erreichtem Limit.
+Ein Registrierungsversuch mit demselben Schlüssel erzeugt keinen weiteren Spieler.
 
-Standard: **120 Sekunden ohne Lebenszeichen**. Der Client sendet spätestens
-alle 15 Sekunden ein Lebenszeichen; bei kurzen Timeouts entsprechend häufiger.
-Die Erkennung vergleicht unter Windows den Pfad des laufenden Spielprozesses
-mit `client.game_executable`. Ein langer Bosskampf oder eine Pause im noch
-laufenden Spiel führt dadurch nicht allein zum Timeout.
+Für **eigene Mindeststimmen, Discord-Ziele oder eine Sperre** die Spieler-ID aus
+dem Client-Fenster oder Serverlog in `clients.json` eintragen:
 
-Wird das Spiel oder der Client beendet, gibt es keine weiteren Lebenszeichen.
-Nach Ablauf des Timeouts schließt der Server die Sitzung und ihre Abstimmungen.
-Die Bereinigung läuft in Abständen von höchstens fünf Sekunden. Discord-Knöpfe
-werden deaktiviert, Browser beenden ihre automatische Abfrage für die beendete
-Sitzung. Die anderen Spieler bleiben verbunden. Gesammelte Ergebnisse bleiben
-gespeichert. Nach einem Timeout eine neue Spielrunde/Verbindung starten.
+```json
+{
+  "clients": [
+    {
+      "id": "auto_HIER_DIE_ECHTE_SPIELER_ID",
+      "minimum_votes": 3,
+      "discord_channel_id": "123456789",
+      "discord_guild_id": "987654321",
+      "enabled": true
+    }
+  ]
+}
+```
 
-Im rein lokalen Modus ist der Timeout nur mit bekanntem Spiel-EXE-Pfad aktiv.
-Ohne diesen Pfad bleibt der bisherige lokale Testbetrieb verwendbar.
+ID und Discord-Nummern ersetzen; weitere Spieler als weitere Einträge ergänzen.
+Ohne Discord die beiden Discord-Felder weglassen. `enabled: false` sperrt den
+Schlüssel auch bei erneuten Registrierungsversuchen. Danach Server neu starten.
+
+Vorhandene manuell vergebene Schlüssel funktionieren weiterhin. Wer die Aufnahme
+geschlossen halten möchte, kann mit `clients.py` optional Schlüssel vorab anlegen.
 
 ## Discord aktivieren
 
-Der Bot veröffentlicht pro Abstimmungsrunde eine Nachricht mit den vier Optionen
-und aktualisiert diese. Ein erneuter Klick desselben Discord-Kontos ändert seine
-Stimme. Nach der Auswertung werden die Knöpfe deaktiviert. Nachrichten-IDs werden
-gespeichert, damit ein normaler Bot-Neustart vorhandene Nachrichten weiterverwendet.
+1. Im [Discord Developer Portal](https://discord.com/developers/applications)
+   einen Bot erstellen. Seinen Token auf dem Server in `settings.env` als
+   `DISCORD_BOT_TOKEN` speichern.
+2. Den Bot mit den Scopes `bot` und `applications.commands` auf deinen Discord-Server
+   einladen. Im Voting-Kanal braucht er Kanalansicht, Nachrichten senden, Links
+   einbetten und Nachrichtenverlauf lesen. Besondere Intents sind nicht nötig.
+3. In der Serverdatei `settings.json` unter `discord` den Wert `enabled` auf `true` setzen.
+4. In `clients.json` die Kanal- und Server-ID beim jeweiligen Spieler eintragen
+   (Beispiel oben) und den App-Container neu starten.
 
-1. Im [Discord Developer Portal](https://discord.com/developers/applications) eine
-   eigene Anwendung mit Bot erstellen und den Token auf dem Server in
-   `settings.env` als `DISCORD_BOT_TOKEN` eintragen. Den Token lokal aufbewahren.
-2. Bot mit den Scopes `bot` und `applications.commands` auf die gewünschten
-   Discord-Server einladen. Im Abstimmungskanal braucht er Kanalansicht,
-   Nachrichten senden, Links einbetten und Nachrichtenverlauf lesen.
-   Message-Content- und Members-Intents werden nicht benötigt.
-3. In der zentralen `settings.json` `discord.enabled` auf `true` setzen.
-4. In `clients.json` beim jeweiligen Spieler `discord_channel_id` und
-   `discord_guild_id` ergänzen. Alternativ schon beim Anlegen:
+Der Bot zeigt die vier Optionen als Knöpfe an und schließt sie nach der Auswertung.
+`/krlink` zeigt den Zuschauerlink des Kanals; `/krstats` zeigt die Boss-Statistik.
+Unterschiedliche Spieler können unterschiedliche Kanäle verwenden.
 
-   ```bash
-   python3 clients.py "Spieler 3" --minimum-votes 3 --discord-channel 123456789 --discord-guild 987654321
-   ```
+Pro Browserprofil und pro Discord-Konto gibt es jeweils eine änderbare Stimme.
+Beide Wege zählen zusammen. Ohne Discord-Anmeldung auf der Webseite kann dieselbe
+Person über beide Wege abstimmen.
 
-   Die Zahlen durch echte Kanal- und Server-IDs ersetzen. Die globalen Discord-IDs
-   in `settings.json` sind nur für den optionalen Standardschlüssel vorgesehen.
-5. App neu starten. `/krstats` zeigt die gemeinsame Boss-Statistik; `/krlink` die
-   aktuelle Abstimmung des jeweiligen Kanals. Unterschiedliche Spieler können
-   unterschiedliche Kanäle und Discord-Server verwenden.
+## Häufige Fragen
 
-Browser und Discord zählen in denselben Stimmenpool. Es gibt jeweils eine Stimme
-pro Browserprofil beziehungsweise Discord-Konto und Runde. Ohne Discord-Anmeldung
-auf der Webseite kann dieselbe Person über beide Wege teilnehmen. Browser-Cookies
-sind keine starke Personenidentifikation.
+**Warum ist die Abstimmung noch leer?**
 
-## Statistiken
+Öffne den vom Spiel erzeugten Zuschauerlink und starte einen Level. Erst dann
+sendet das Spiel die vier Kandidaten.
 
-Erfasst werden Boss-Siege, Niederlagen am Boss, deren Quote, begonnene Spielrunden,
-Abstimmungsrunden, Stimmen und beliebte Item-Optionen. Wiederholte Boss-Meldungen
-derselben Spielrunde werden dedupliziert. Das Spiel erhält die gemeinsamen
-Boss-Zähler über seinen vorhandenen `getBossStat`-Endpunkt.
+**Warum kommen keine Items an?**
 
-Die Quote bezieht sich auf die auf diesem Server erfassten Bossausgänge. Es werden
-keine alten weltweiten Zahlen erfunden. Bei neuen Bossen fehlen zunächst Daten.
-Die Anzeige verwendet Boss-/Levelnummern und Item-Kennungen, bis zusätzliche
-Spiel-Assets für Namen und Bilder vorliegen. `items.json` kann wie bisher eigene
-Anzeigenamen enthalten. `stats.public=false` schaltet die öffentliche Statistik ab.
+Prüfe Patch, geöffnetes Verbindungsfenster und die benötigte Stimmenzahl. Nach
+einer Änderung der Stimmenzahl den Patch bei geschlossenem Spiel erneut anwenden.
 
-## Prüfstand
+**Die Registrierung ist abgelehnt. Was tun?**
 
-Die ursprüngliche lokale Item-Vergabe wurde vom Nutzer mit 0.1.1 bestätigt.
-Version 0.2 wurde mit lokalen HTTP-Integrationstests geprüft: getrennte Spieler-
-schlüssel, parallele Stimmen für getrennte Runden, gemeinsame Boss-Quoten,
-authentifizierter PC-Client, Datenbankmigration, Heartbeats, Timeout und echter
-Hub-Programmstart einschließlich Bereinigung. Discord-Knöpfe wurden ohne Login
-gegen die installierte discord.py-Version getestet. Alle 127 Mindeststimmen-
-Varianten wurden als IL geprüft; die bisherigen Werte 1 und 3 behalten ihre Hashes.
+Bei einem Limit später erneut verbinden. Bei geschlossener Aufnahme oder einer
+Sperre den Betreiber fragen. Den gespeicherten Schlüssel behalten.
 
-Der neue Windows-Prozessmonitor, höhere Mindeststimmen im echten Spiel sowie
-Discord-Verbindung und HTTPS-Betrieb auf dem Zielserver müssen noch praktisch
-bestätigt werden. In dieser Umgebung ist kein Docker-Daemon verfügbar.
+**Was bedeutet die Boss-Prozentzahl?**
 
-## Quellen der Integrationen
+Sie zeigt Siege im Verhältnis zu den auf diesem Server erfassten Boss-Siegen und
+Niederlagen. Die Daten des alten weltweiten Dienstes sind nicht enthalten.
+Item-Namen kannst du in `items.json` ergänzen.
 
-- [Discord: Interactions](https://docs.discord.com/developers/interactions/overview)
-- [discord.py: Interactions API](https://discordpy.readthedocs.io/en/stable/interactions/api.html)
-- [Caddy: HTTPS-Reverse-Proxy](https://caddyserver.com/docs/quick-starts/reverse-proxy)
+**Wie entferne ich den Patch?**
 
-Historische Protokollanalyse und Anleitungen der Version 0.1.1 liegen unter `docs/`.
+Spiel schließen und `ORIGINAL_WIEDERHERSTELLEN.bat` ausführen. Die Sicherung
+`Assembly-CSharp.dll.kr-original.bak` muss vorhanden sein.
+
+## Entwicklungsstand
+
+Die lokale Item-Vergabe wurde im Spiel mit Version 0.1.1 bestätigt. HTTP-Tests
+prüfen Spielprotokoll, parallele Spieler, Stimmen, Statistik, automatische
+Registrierung, Neustarts, Schlüssel-Sperren und Timeouts. Die 127 Patch-Varianten
+wurden auf IL-Ebene geprüft; Discord wurde bisher ohne Live-Anmeldung getestet.
+
+Der Windows-Prozessmonitor, höhere Stimmenzahlen im echten Spiel, die Live-Verbindung
+zu Discord und HTTPS auf dem Zielserver müssen noch praktisch bestätigt werden.
+Ein vollständiger Docker-Test war in der Entwicklungsumgebung nicht möglich.
+
+Tests ausführen:
+
+```bash
+python3 -m pip install -r requirements-discord.txt
+python3 -m unittest discover -s tests -v
+```
+
+Originale Spiel-DLLs sind nicht enthalten. Historische Protokollnotizen liegen
+unter [`docs/`](docs/). Weitere Referenzen: [discord.py](https://discordpy.readthedocs.io/en/stable/interactions/api.html)
+und [Caddy](https://caddyserver.com/docs/quick-starts/reverse-proxy).

@@ -189,6 +189,9 @@ class ConfigurationTests(unittest.TestCase):
                 with self.assertRaises(ValueError):load_settings(path)
             path.write_text(json.dumps({'connection_timeout_seconds':0}))
             self.assertEqual(load_settings(path)['connection_timeout_seconds'],0)
+            for registration in [{'enabled':'true'},{'per_hour':0},{'max_clients':True},{'per_hour':1000001}]:
+                path.write_text(json.dumps({'registration':registration}))
+                with self.assertRaises(ValueError):load_settings(path)
 
     def test_legacy_database_migrates_without_losing_records(self):
         with tempfile.TemporaryDirectory() as tmp:

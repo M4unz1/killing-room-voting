@@ -29,11 +29,11 @@
   "installation_backup_variant_switch_restore": true,
   "unrelated_modification_preserved": true,
   "game_runtime_tested": false,
-  "http_integration_tests": 25,
+  "http_integration_tests": 36,
   "http_integration_tests_passed": true,
   "javascript_syntax_checked": true,
   "windows_unity_runtime_tested": false,
-  "version": "0.2",
+  "version": "0.2.1",
   "floor_regression_reproduced_before_fix": true,
   "floor_regression_passed_after_fix": true,
   "preexisting_database_votes_preserved": true,
@@ -59,5 +59,10 @@
   "real_hub_entrypoint_and_timeout_worker_tested": true,
   "compose_yaml_validated": true,
   "docker_engine_available": false,
-  "discord_library_tested": "2.7.1"
+  "discord_library_tested": "2.7.1",
+  "automatic_registration_tests": 11,
+  "automatic_registration_tests_passed": true,
+  "empty_hub_and_client_process_restart_tested": true,
+  "per_server_key_cache_and_hash_only_database_tested": true,
+  "registration_quotas_and_revocation_tested": true
 }

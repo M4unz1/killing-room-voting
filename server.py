@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parent
 API_PREFIX = '/reqapi/killingroom/'
 MAX_BODY = 65536
 LOG = logging.getLogger('kr_voting')
-VERSION = '0.2'
+VERSION = '0.2.1'
 
 
 class ProtocolError(ValueError):
@@ -400,16 +400,19 @@ class Store:
 class VotingServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, address, store, game_api_token='', registry=None, connection_timeout=120):
+    def __init__(self, address, store, game_api_token='', registry=None, connection_timeout=120, registration=None):
         self.store = store
         self.game_api_token = game_api_token
         self.registry = registry
+        self.registration=registration or {'enabled':True,'per_hour':60,'max_clients':10000}
+        if registry:
+            registry.attach_store(store)
         self.connection_timeout=connection_timeout
         super().__init__(address, Handler)
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = 'KillingRoomVoting/0.2'
+    server_version = 'KillingRoomVoting/'+VERSION
 
     def log_message(self, fmt, *args):
         # Log useful protocol events in Store; do not record raw device IDs or request bodies.
@@ -479,7 +482,10 @@ class Handler(BaseHTTPRequestHandler):
             if self.headers.get('Authorization') and self.server.registry and actor is None:
                 return self._json(401, {'error':'Ungueltiger API-Schluessel.'})
             minimum=actor['minimum_votes'] if actor else self.server.store.minimum_votes
-            self._json(200, {'version':VERSION,'minimum_votes':minimum,'connection_timeout_seconds':self.server.connection_timeout})
+            result={'version':VERSION,'minimum_votes':minimum,'connection_timeout_seconds':self.server.connection_timeout,
+                    'registration_enabled':bool(self.server.registry and self.server.registration['enabled'])}
+            if actor:result['client_id']=actor['id']
+            self._json(200, result)
         elif path == '/api/stats':
             if not self.server.store.public_stats:
                 return self._json(404, {'error':'Statistiken sind privat.'})
@@ -498,6 +504,26 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlsplit(self.path).path.rstrip('/')
         try:
+            if path=='/api/register':
+                from clients import RegistrationError
+                if not self.server.registry:
+                    return self._json(404,{'error':'Registrierung nur am zentralen Server.'})
+                if self.headers.get('Content-Type','').split(';',1)[0].strip().lower()!='application/json':
+                    raise ProtocolError('JSON erwartet.')
+                origin=self.headers.get('Origin')
+                if origin and origin not in {self.server.store.public_url,'http://'+self.headers.get('Host','')}:
+                    return self._json(403,{'error':'Ungueltiger Ursprung.'})
+                data=json.loads(self._body())
+                if not isinstance(data,dict) or set(data)-{'name'}:
+                    raise ProtocolError('Nur ein optionaler Spielername ist erlaubt.')
+                authorization=self.headers.get('Authorization','')
+                token=authorization[7:] if authorization.startswith('Bearer ') else ''
+                try:
+                    actor,created=self.server.registry.register(token,data.get('name',''),self.server.registration)
+                except RegistrationError as exc:
+                    return self._json(exc.status,{'error':str(exc)})
+                if created:LOG.info('Spiel-PC automatisch registriert: %s.',actor['id'])
+                return self._json(201 if created else 200,{'client_id':actor['id'],'minimum_votes':actor['minimum_votes']})
             if path=='/api/heartbeat':
                 authorization=self.headers.get('Authorization','')
                 actor=self.server.registry.authenticate(authorization) if self.server.registry else None
@@ -548,7 +574,7 @@ def main():
     from config import load_env, load_settings, api_token, ensure_patch, validate_url
     load_env()
     settings = load_settings()
-    parser = argparse.ArgumentParser(description='Killing Room Voting 0.2: lokal oder zentraler Server.')
+    parser = argparse.ArgumentParser(description='Killing Room Voting '+VERSION+': lokal oder zentraler Server.')
     parser.add_argument('--bind', default=None)
     parser.add_argument('--port', type=int, default=None)
     parser.add_argument('--database', type=Path, default=None)
@@ -564,8 +590,6 @@ def main():
         token=''
     from clients import ClientRegistry
     registry=ClientRegistry(legacy_token=token,default_minimum=settings['minimum_votes']) if mode=='hub' else None
-    if mode=='hub' and not registry.records() and not token:
-        parser.error('Im Hub-Modus mindestens einen Spielerschluessel mit clients.py anlegen.')
     if mode=='local':
         ensure_patch(settings,settings['minimum_votes'])
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s', handlers=[
@@ -582,7 +606,8 @@ def main():
     bot = None
     try:
         server = VotingServer((bind,port),store,game_api_token=token,registry=registry,
-                              connection_timeout=settings['connection_timeout_seconds'])
+                              connection_timeout=settings['connection_timeout_seconds'],registration=settings['registration'])
+        if registry:registry.records()
         if settings['discord']['enabled']:
             from discord_bot import DiscordRunner
             bot = DiscordRunner(store,os.environ.get('DISCORD_BOT_TOKEN',''),

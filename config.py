@@ -1,8 +1,13 @@
 """Shared settings for local play, central hosting and the Windows relay."""
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
+import re
+import secrets
+import time
+from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import Request, HTTPRedirectHandler, build_opener
 
@@ -12,10 +17,11 @@ class NoRedirect(HTTPRedirectHandler):
 DEFAULTS = {
     'minimum_votes': 1,
     'server': {'mode': 'local', 'bind': '127.0.0.1', 'port': 8765, 'public_url': ''},
-    'client': {'server_url': '', 'game_dll': '', 'game_executable': ''},
+    'client': {'server_url': '', 'player_name': '', 'game_dll': '', 'game_executable': ''},
     'connection_timeout_seconds': 120,
     'discord': {'enabled': False, 'channel_id': '', 'guild_id': ''},
     'stats': {'public': True},
+    'registration': {'enabled': True, 'per_hour': 60, 'max_clients': 10000},
 }
 
 
@@ -59,7 +65,7 @@ def load_settings(path=None):
     timeout=settings['connection_timeout_seconds']
     if type(timeout) is not int or timeout!=0 and not 5<=timeout<=86400:
         raise ValueError('connection_timeout_seconds: 0 zum Deaktivieren oder 5 bis 86400 Sekunden.')
-    for key in ('server', 'client', 'discord', 'stats'):
+    for key in ('server', 'client', 'discord', 'stats', 'registration'):
         if not isinstance(settings.get(key), dict):
             raise ValueError(key + ' muss ein JSON-Objekt sein.')
     for env, key in [('KR_MODE','mode'),('KR_BIND','bind'),('KR_PUBLIC_URL','public_url')]:
@@ -73,6 +79,15 @@ def load_settings(path=None):
         raise ValueError('Ungueltiger Server-Port.')
     if type(settings['discord'].get('enabled')) is not bool or type(settings['stats'].get('public')) is not bool:
         raise ValueError('enabled/public muss true oder false sein.')
+    if type(settings['registration'].get('enabled')) is not bool:
+        raise ValueError('registration.enabled muss true oder false sein.')
+    for key in ('per_hour','max_clients'):
+        value=settings['registration'].get(key)
+        if type(value) is not int or not 1<=value<=1000000:
+            raise ValueError('registration.'+key+': ganze Zahl von 1 bis 1000000.')
+    name=settings['client'].get('player_name','')
+    if not isinstance(name,str) or len(name)>80 or any(ord(c)<32 for c in name):
+        raise ValueError('client.player_name: maximal 80 Zeichen ohne Steuerzeichen.')
     return settings
 
 
@@ -93,14 +108,63 @@ def validate_url(value, allow_local_http=False):
     return value
 
 
+def client_token(base):
+    """Keep one automatically generated credential per server on this PC.
+
+    Save before sending, so interrupted registrations can retry with the same
+    key. Explicit keys in settings.env remain supported for private servers.
+    """
+    token=api_token()
+    if token and not token.startswith('HIER_'):
+        if not re.fullmatch(r'[A-Za-z0-9_-]{32,128}',token):
+            raise ValueError('Der vorhandene KR_GAME_API_TOKEN ist ungueltig.')
+        return token,False
+    folder=ROOT/'client_keys'
+    folder.mkdir(mode=0o700,exist_ok=True)
+    path=folder/('client-'+hashlib.sha256(base.encode()).hexdigest()+'.key')
+    try:
+        fd=os.open(path,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
+    except FileExistsError:
+        # Another launcher may still be completing its first write.
+        for attempt in range(20):
+            token=path.read_text(encoding='ascii').strip()
+            if token:break
+            time.sleep(.05)
+    else:
+        token=secrets.token_urlsafe(48)
+        with os.fdopen(fd,'w',encoding='ascii') as stream:
+            stream.write(token+'\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+    if not re.fullmatch(r'[A-Za-z0-9_-]{64}',token):
+        raise ValueError('Die lokale Schluesseldatei ist beschaedigt. Sicherung in client_keys/ pruefen.')
+    return token,True
+
+
 def remote_configuration(settings):
     base = validate_url(settings['client']['server_url'], allow_local_http=True)
-    token=api_token()
-    if len(token)<32 or token.startswith('HIER_'):
-        raise ValueError('Zuerst den eigenen KR_GAME_API_TOKEN in settings.env eintragen.')
+    token,automatic=client_token(base)
     request = Request(base+'/api/config', headers={'User-Agent':'KillingRoomRelay/0.2','Authorization':'Bearer '+token})
-    with build_opener(NoRedirect()).open(request, timeout=10) as response:
-        data = json.loads(response.read(8192))
+    opener=build_opener(NoRedirect())
+    try:
+        with opener.open(request, timeout=10) as response:
+            data = json.loads(response.read(8192))
+    except HTTPError as exc:
+        if exc.code!=401 or not automatic:
+            raise ValueError('Serverzugang abgelehnt (HTTP '+str(exc.code)+'). Vorhandenen API-Schluessel pruefen.') from None
+        registration=Request(base+'/api/register',data=json.dumps({'name':settings['client'].get('player_name','')}).encode(),
+            headers={'Content-Type':'application/json','Authorization':'Bearer '+token,'User-Agent':'KillingRoomRelay/0.2'})
+        try:
+            with opener.open(registration,timeout=10) as response:response.read(8192)
+        except HTTPError as error:
+            messages={403:'Dieser Server nimmt keine neuen Spieler an oder dein Schluessel wurde gesperrt.',
+                      404:'Dieser Server unterstuetzt noch keine automatische Registrierung.',
+                      429:'Registrierungslimit erreicht. Spaeter mit demselben Schluessel erneut versuchen.'}
+            raise ValueError(messages.get(error.code,'Automatische Registrierung fehlgeschlagen (HTTP '+str(error.code)+').')) from None
+        with opener.open(request,timeout=10) as response:
+            data=json.loads(response.read(8192))
+    if not isinstance(data,dict):
+        raise ValueError('Der Server hat keine gueltige Konfiguration geliefert.')
     minimum = data.get('minimum_votes')
     if type(minimum) is not int or not 1 <= minimum <= 127:
         raise ValueError('Der Server hat eine ungueltige Mindeststimmenzahl geliefert.')

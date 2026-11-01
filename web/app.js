@@ -90,6 +90,11 @@ if (tokenMatch) {
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !latest?.ended) fetchState(); });
 } else {
   statusLabel.textContent = 'Voting-Server ist erreichbar';
-  message.textContent = 'Starte Killing Room mit dem lokalen Patch und erzeuge im Startmenü die Zuschauer-URL. Öffne anschließend genau diesen Link im Browser.';
-  document.getElementById('hint').textContent = 'Der Testserver muss während des Spielens geöffnet bleiben.';
+  totalLabel.textContent = '';
+  subtitle.textContent = 'Verbinde deinen Spiel-PC mit diesem Server und teile anschließend deinen Zuschauerlink.';
+  message.textContent = 'Trage ' + location.origin + ' als client.server_url in deiner settings.json ein und starte EINSTELLUNGEN_ANWENDEN.bat. Dein API-Schlüssel wird beim ersten Verbinden automatisch erzeugt und registriert. Starte danach 3_SPIEL_PC_VERBINDEN.bat und Killing Room.';
+  document.getElementById('hint').textContent = 'Zuschauer öffnen den Link, den das Spiel erzeugt. Sie benötigen keinen API-Schlüssel.';
+  fetch('/api/config', {cache:'no-store'}).then(response => response.json()).then(config => {
+    if (!config.registration_enabled) message.textContent = 'Starte Killing Room mit dem lokalen Patch und erzeuge im Startmenü die Zuschauer-URL. Öffne genau diesen Link zum Abstimmen. Der Server nimmt derzeit keine neuen Spiel-PCs automatisch auf.';
+  }).catch(() => { statusLabel.textContent = 'Verbindung unterbrochen'; });
 }

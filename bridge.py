@@ -9,7 +9,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
-from config import load_env, load_settings, validate_url, api_token, remote_configuration, ensure_patch
+from config import load_env, load_settings, validate_url, api_token, client_token, remote_configuration, ensure_patch
 from presence import game_running
 from server import parse_game_form
 
@@ -127,10 +127,8 @@ def main():
         load_env()
         settings = load_settings()
         base = validate_url(settings['client']['server_url'], allow_local_http=True)
-        token = api_token()
-        if len(token) < 32 or token.startswith('HIER_'):
-            raise ValueError('KR_GAME_API_TOKEN in settings.env eintragen (mindestens 32 Zeichen).')
         remote=remote_configuration(settings)
+        token,_=client_token(base)
         minimum=remote['minimum_votes']
         ensure_patch(settings, minimum)
         executable=settings['client'].get('game_executable','')
@@ -142,6 +140,7 @@ def main():
         LOG.error('%s', str(exc).replace(api_token(), '[Schluessel]') if api_token() else str(exc))
         return 1
     LOG.info('Spiel-PC verbunden mit %s; Mindeststimmen: %s. Jetzt Killing Room starten.', base, minimum)
+    LOG.info('Spieler-ID: %s. Der API-Schluessel wird lokal gespeichert und automatisch wiederverwendet.',remote.get('client_id','legacy'))
     try:
         server.serve_forever()
     except KeyboardInterrupt:
