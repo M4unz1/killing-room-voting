@@ -1,0 +1,63 @@
+{
+  "original_sha256": "d98154467f1a7c64b37da72f32464e9e45a8ffa2aeb1bf5a897059e221942cf9",
+  "variants": [
+    {
+      "minimum_votes": 1,
+      "sha256": "ec0a8f32952d2549ee873667f3db70914332ff1f43cf64751146fe793bcd8483",
+      "changed_methods": [
+        "KillingRoom.HTTP::GetCrypted",
+        "KillingRoom.HTTP::GetDecrypted",
+        "KillingRoom.CUIVotingResults::LoadVotes"
+      ],
+      "unchanged_method_bodies": 7506,
+      "changed_bytes": 231,
+      "file_size": 1262592
+    },
+    {
+      "minimum_votes": 3,
+      "sha256": "913e7329290e29b461b8e4220db1e074d08e0e298c31162420bbe8819f737b0a",
+      "changed_methods": [
+        "KillingRoom.HTTP::GetCrypted",
+        "KillingRoom.HTTP::GetDecrypted"
+      ],
+      "unchanged_method_bodies": 7507,
+      "changed_bytes": 230,
+      "file_size": 1262592
+    }
+  ],
+  "arithmetic_matches_original_il": 28,
+  "installation_backup_variant_switch_restore": true,
+  "unrelated_modification_preserved": true,
+  "game_runtime_tested": false,
+  "http_integration_tests": 25,
+  "http_integration_tests_passed": true,
+  "javascript_syntax_checked": true,
+  "windows_unity_runtime_tested": false,
+  "version": "0.2",
+  "floor_regression_reproduced_before_fix": true,
+  "floor_regression_passed_after_fix": true,
+  "preexisting_database_votes_preserved": true,
+  "user_verified_handshake_and_new_floor": true,
+  "ingame_item_delivery_verified": true,
+  "dll_patch_unchanged_from_0_1": true,
+  "user_confirmed_version_0_1_1_item_delivery": true,
+  "features_02_live_discord_tested": false,
+  "features_02_public_host_deployed": false,
+  "windows_process_monitor_runtime_tested": false,
+  "thresholds": {
+    "thresholds_verified": 127,
+    "range": [
+      1,
+      127
+    ],
+    "branch_targets_and_exception_regions_preserved": true,
+    "previous_one_and_three_vote_hashes_preserved": true,
+    "unity_runtime_new_thresholds_tested": false
+  },
+  "multi_player_concurrent_voters": 16,
+  "multi_player_simultaneous_sessions": 2,
+  "real_hub_entrypoint_and_timeout_worker_tested": true,
+  "compose_yaml_validated": true,
+  "docker_engine_available": false,
+  "discord_library_tested": "2.7.1"
+}

@@ -1,0 +1,23 @@
+{
+  "minimum_votes": 1,
+  "server": {
+    "mode": "local",
+    "bind": "127.0.0.1",
+    "port": 8765,
+    "public_url": ""
+  },
+  "client": {
+    "server_url": "",
+    "game_dll": "",
+    "game_executable": ""
+  },
+  "discord": {
+    "enabled": false,
+    "channel_id": "",
+    "guild_id": ""
+  },
+  "stats": {
+    "public": true
+  },
+  "connection_timeout_seconds": 120
+}

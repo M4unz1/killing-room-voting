@@ -1,0 +1,25 @@
+# Personal configuration and credentials
+/settings.json
+/clients.json
+*.env
+client_keys/
+seed/
+data/
+*.key
+*.pem
+*.crt
+*.pfx
+*.p12
+
+# Runtime data and original game files
+*.sqlite3*
+*.db
+*.log*
+log.txt
+*.bak
+*.dll
+*.rar
+__pycache__/
+*.py[cod]
+.venv/
+venv/

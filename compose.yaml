@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    container_name: killing-room-voting
+    restart: unless-stopped
+    env_file: settings.env
+    environment:
+      KR_MODE: hub
+      KR_BIND: 0.0.0.0
+      KR_PUBLIC_URL: https://${SERVER_HOST:?SERVER_HOST in settings.env setzen}
+      KR_DATABASE_PATH: /data/kr_voting.sqlite3
+      KR_SEED_PATH: /seed/kr_voting.sqlite3
+    volumes:
+      - kr_data:/data
+      - ./settings.json:/app/settings.json:ro
+      - ./clients.json:/app/clients.json:ro
+      - ./seed:/seed:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/api/health',timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      SERVER_HOST: ${SERVER_HOST:?SERVER_HOST fehlt}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+volumes:
+  kr_data:
+  caddy_data:
+  caddy_config:

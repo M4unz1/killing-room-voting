@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Killing Room · Zuschauer-Voting</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <main>
+    <header><span class="brand">KILLING ROOM<span class="brand-dot">■</span></span><a class="tag" href="/stats">STATISTIK</a></header>
+    <section class="intro">
+      <p class="eyebrow">DIE ZUSCHAUER HABEN DAS WORT</p>
+      <h1>Deine Stimme.<br><em>Sein Schicksal.</em></h1>
+      <p id="subtitle">Wähle die Belohnung oder Bestrafung für die nächste Auswertung.</p>
+    </section>
+    <section class="round-bar" aria-live="polite">
+      <span id="status" class="status">Verbindung wird hergestellt …</span>
+      <span id="total">0 Stimmen</span>
+    </section>
+    <div id="message" role="status"></div>
+    <section id="options" aria-label="Abstimmungsoptionen"></section>
+    <p class="hint" id="hint">Eine Stimme pro Browser und Abstimmung. Du kannst deine Auswahl bis zum Levelende ändern.</p>
+    <footer><span>COMMUNITY PROTOTYPE <b>0.2</b></span><span>Das Ergebnis wird bei der Auswertung im Spiel abgeholt.</span></footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+*.sqlite3*
+*.log*
+settings.env
+settings.json
+seed
+tests
+*.bak
+
+client_keys
+clients.json
